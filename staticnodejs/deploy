@@ -1,0 +1,91 @@
+#!/bin/bash -el
+
+# Copyright 2016 tsuru authors. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+SOURCE_DIR=/var/lib/tsuru
+
+source ${SOURCE_DIR}/base/rc/config
+source ${SOURCE_DIR}/base/deploy
+
+set +e
+test -e ${CURRENT_DIR}/nginx.conf && sudo mv ${CURRENT_DIR}/nginx.conf /etc/nginx/nginx.conf
+set -e
+
+NGINX_PKG=${NGINX_PKG:-nginx}
+
+case "$NGINX_PKG" in
+    "nginx-core"|"nginx"|"nginx-full"|"nginx-light"|"nginx-extras")
+        dpkg -s $NGINX_PKG &> /dev/null || (sudo apt-get update && sudo apt-get install -qy $NGINX_PKG)
+        ;;
+    *)
+        echo "ERROR: Invalid nginx package $NGINX_PKG."
+        echo "Supported values are: nginx, nginx-core, nginx-full, nginx-light, nginx-extras."
+        exit 1
+        ;;
+esac
+
+# ${SOURCE_DIR}/static/validate-nginx-conf /etc/nginx/nginx.conf
+
+## NodeJS
+
+SOURCE_DIR=/var/lib/tsuru
+source ${SOURCE_DIR}/base/rc/config
+
+if [ -n "${KEEP_NODE_MODULES}" ] && [ -d ${CURRENT_DIR}/node_modules ]; then
+  PLATFORM_EXTRA_RSYNC_ARGS="--filter \"protect node_modules/\""
+fi
+
+source ${SOURCE_DIR}/base/deploy
+
+NODE_VERSION=stable
+
+if [ -f ${CURRENT_DIR}/.nvmrc ]; then
+    TMP_VERSION=$(cat ${CURRENT_DIR}/.nvmrc)
+elif [ -f ${CURRENT_DIR}/.node-version ]; then
+    TMP_VERSION=$(cat ${CURRENT_DIR}/.node-version)
+elif [ -f ${CURRENT_DIR}/package.json ]; then
+    TMP_VERSION=$(jq -r '.engines | .node | select(. != null)' ${CURRENT_DIR}/package.json)
+fi
+
+if [ -n "$TMP_VERSION" ]; then
+    NODE_VERSION=${TMP_VERSION}
+fi
+
+if [ $NPM_REGISTRY ]; then
+    echo "registry = $NPM_REGISTRY" > ~/.npmrc
+fi
+
+if [ $NVM_IOJS_ORG_MIRROR ] && [[ "$NODE_VERSION" =~ ^(iojs-v|v)?[123](\.[0-9]+)?(\.[0-9]+)? ]]; then
+    echo "disturl = $NVM_IOJS_ORG_MIRROR" >> ~/.npmrc
+elif [ $NVM_NODEJS_ORG_MIRROR ]; then
+    echo "disturl = $NVM_NODEJS_ORG_MIRROR" >> ~/.npmrc
+fi
+
+export NVM_DIR=${HOME}/.nvm
+[ ! -e ${NVM_DIR} ] && mkdir -p ${NVM_DIR}
+
+. /etc/nvm/nvm.sh
+
+nvm install ${NODE_VERSION}
+
+rm -f ~/.nvm_bin
+ln -s $NVM_BIN ~/.nvm_bin
+
+if [ -f ${CURRENT_DIR}/package.json ] && [ -f "${CURRENT_DIR}/yarn.lock" ]; then
+    echo "yarn.lock detected, using yarn to install node packages"
+    yarn_bin=${NVM_BIN}/yarn
+    if [ ! -f $yarn_bin ]; then
+        npm install -g yarn@0.16.1
+    fi
+    if [ $NPM_REGISTRY ]; then
+        echo "registry \"$NPM_REGISTRY\"" > ~/.yarnrc
+        sed -i "s|https://registry.yarnpkg.com|$NPM_REGISTRY|g" ${CURRENT_DIR}/yarn.lock
+    fi
+    pushd $CURRENT_DIR && ${yarn_bin} install
+    popd
+elif [ -f ${CURRENT_DIR}/package.json ] ; then
+    pushd $CURRENT_DIR && npm install --production
+    popd
+fi

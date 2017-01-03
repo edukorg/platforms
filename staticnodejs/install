@@ -1,0 +1,32 @@
+#!/bin/bash -e
+
+# Copyright 2016 tsuru authors. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+SOURCE_DIR=/var/lib/tsuru
+source ${SOURCE_DIR}/base/rc/config
+
+apt-get update
+apt-get install nginx -y
+
+rm -rf /var/log/nginx /var/lib/nginx
+mkdir -p /var/log/nginx /var/lib/nginx
+chown -R ${USER}:${USER} /var/lib/nginx /var/log/nginx
+
+cp ${SOURCE_DIR}/static/Procfile ${SOURCE_DIR}/default/Procfile
+cp ${SOURCE_DIR}/static/etc/nginx.conf /etc/nginx/nginx.conf
+echo "sudo chmod 777 /dev/stdout" >> /etc/profile
+
+# NodeJS
+
+apt-get update
+apt-get install git -y
+git clone https://github.com/creationix/nvm.git /etc/nvm
+cd /etc/nvm && git checkout `git describe --abbrev=0 --tags`
+
+cat >> ${HOME}/.profile <<EOF
+if [ -e ${HOME}/.nvm_bin ]; then
+  export PATH="${HOME}/.nvm_bin:$PATH"
+fi
+EOF
