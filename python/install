@@ -13,10 +13,10 @@ PYENV_ROOT="/var/lib/pyenv"
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     make build-essential libssl-dev zlib1g-dev libbz2-dev \
     libreadline-dev libsqlite3-dev curl llvm libncurses5-dev libncursesw5-dev \
-    xz-utils tk-dev git libexpat1 libffi-dev
+    xz-utils tk-dev git libexpat1 libffi-dev tzdata
 
 git clone https://github.com/pyenv/pyenv.git ${PYENV_ROOT}
 git clone https://github.com/pyenv/pyenv-virtualenv.git ${PYENV_ROOT}/plugins/pyenv-virtualenv

@@ -8,11 +8,12 @@ SOURCE_DIR=/var/lib/tsuru
 source ${SOURCE_DIR}/base/rc/config
 
 apt-get update
-apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         bzr \
         mercurial \
         git \
-        golang
+        golang \
+        tzdata
 
 cp ${SOURCE_DIR}/go/Procfile ${SOURCE_DIR}/default/Procfile
 echo "GOPATH=${APP_DIR}" >> ${HOME}/.profile

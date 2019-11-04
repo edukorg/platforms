@@ -9,7 +9,7 @@ source ${SOURCE_DIR}/base/rc/config
 
 # Install Essential Packages
 apt-get update
-apt-get install -y --no-install-recommends \
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         nodejs \
         ruby \
         libgmp-dev \
@@ -24,6 +24,7 @@ apt-get install -y --no-install-recommends \
         libxml2-dev \
         libxslt1-dev \
         libcurl4-openssl-dev \
-        libffi-dev
+        libffi-dev \
+        tzdata
 
 echo "export PATH=/home/application/ruby/bin:${PATH} GEM_PATH=/home/application/ruby GEM_HOME=/home/application/ruby BUNDLE_APP_CONFIG=/home/application/ruby/.bundle/config" | tee -a ${HOME}/.profile /etc/profile >/dev/null
