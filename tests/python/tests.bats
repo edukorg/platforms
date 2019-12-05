@@ -14,16 +14,16 @@ setup() {
     pyenv uninstall --force app_env
 }
 
-@test "use python version 2.7 as default" {
+@test "use python version 3.8 as default" {
     run /var/lib/tsuru/deploy
-    [[ "$output" == *"Using python version: 2.7.14 (default)"* ]]
+    [[ "$output" == *"Using python version: 3.8.0 (default)"* ]]
 
     pushd ${CURRENT_DIR}
     run python --version
     popd
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"2.7.14"* ]]
+    [[ "$output" == *"3.8.0"* ]]
 }
 
 @test "parse python version from .python-version" {
@@ -53,32 +53,32 @@ setup() {
     unset PYTHON_VERSION
 }
 
-@test "use python version 2.7 as default with invalid .python-version" {
+@test "use python version 3.8 as default with invalid .python-version" {
     echo "xyz" > ${CURRENT_DIR}/.python-version
     run /var/lib/tsuru/deploy
     [[ "$output" == *"Python version 'xyz' (.python-version file) is not supported"* ]]
-    [[ "$output" == *"Using python version: 2.7.14 (default)"* ]]
+    [[ "$output" == *"Using python version: 3.8.0 (default)"* ]]
 
     pushd ${CURRENT_DIR}
     run python --version
     popd
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"2.7.14"* ]]
+    [[ "$output" == *"3.8.0"* ]]
 }
 
-@test "use python version 2.7 as default with invalid PYTHON_VERSION" {
+@test "use python version 3.8 default with invalid PYTHON_VERSION" {
     export PYTHON_VERSION=abc
     run /var/lib/tsuru/deploy
     [[ "$output" == *"Python version 'abc' (PYTHON_VERSION environment variable) is not supported"* ]]
-    [[ "$output" == *"Using python version: 2.7.14 (default)"* ]]
+    [[ "$output" == *"Using python version: 3.8.0 (default)"* ]]
 
     pushd ${CURRENT_DIR}
     run python --version
     popd
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"2.7.14"* ]]
+    [[ "$output" == *"3.8.0"* ]]
     unset PYTHON_VERSION
 }
 
@@ -131,26 +131,18 @@ EOF
     run python --version
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"2.7.14"* ]]
+    [[ "$output" == *"3.8.0"* ]]
 
-    export PYTHON_VERSION=3.5.5
+    export PYTHON_VERSION=3.7.5
     run /var/lib/tsuru/deploy
     run python --version
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"3.5.5"* ]]
+    [[ "$output" == *"3.7.5"* ]]
     unset PYTHON_VERSION
 }
 
 @test "change python version to closest version" {
-    export PYTHON_VERSION=3.6.1
-    run /var/lib/tsuru/deploy
-    [[ "$output" == *"Using python version: 3.6.5 (PYTHON_VERSION environment variable (closest))"* ]]
-    run python --version
-
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"3.6.5"* ]]
-
     export PYTHON_VERSION=3.7.1
     run /var/lib/tsuru/deploy
     [[ "$output" == *"Using python version: 3.7.4 (PYTHON_VERSION environment variable (closest))"* ]]
@@ -166,33 +158,6 @@ EOF
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"3.8.0"* ]]
-
-    export PYTHON_VERSION=3.5.1
-    run /var/lib/tsuru/deploy
-    [[ "$output" == *"Using python version: 3.5.5 (PYTHON_VERSION environment variable (closest))"* ]]
-    run python --version
-
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"3.5.5"* ]]
-
-    export PYTHON_VERSION=pypy2.7
-    run /var/lib/tsuru/deploy
-    [[ "$output" == *"Using python version: pypy2.7-5.10.0 (PYTHON_VERSION environment variable (closest))"* ]]
-    run python --version
-
-    [ "$status" -eq 0 ]
-    echo "OUTPUT: xxx${output}xxx"
-    [[ "$output" == *"2.7"* ]]
-    [[ "$output" == *"5.10.0"* ]]
-
-    export PYTHON_VERSION=pypy3.5
-    run /var/lib/tsuru/deploy
-    [[ "$output" == *"Using python version: pypy3.5-5.10.1 (PYTHON_VERSION environment variable (closest))"* ]]
-    run python --version
-
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"3.5"* ]]
-    [[ "$output" == *"5.10.1"* ]]
 
     unset PYTHON_VERSION
 }
