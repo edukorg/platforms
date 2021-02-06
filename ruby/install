@@ -27,4 +27,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libffi-dev \
         tzdata
 
-echo "export PATH=/home/application/ruby/bin:${PATH} GEM_PATH=/home/application/ruby GEM_HOME=/home/application/ruby BUNDLE_APP_CONFIG=/home/application/ruby/.bundle/config" | tee -a ${HOME}/.profile /etc/profile >/dev/null
+mkdir /home/application/ruby
+chown ${USER}:${USER} /home/application/ruby
+
+echo "export PATH=/home/application/ruby/bin:${PATH}" | tee -a ${HOME}/.profile /etc/profile >/dev/null
